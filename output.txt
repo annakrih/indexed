@@ -1,0 +1,96 @@
+------------Results-------------
+  Loan: 40 year loan (N40) - Goal inflation 2.5%
+  Total paid =               74,571,754
+  Maximum capital outstanding : 25,000,000
+               max - original : 0
+  First payment: 155,358
+------------Results-------------
+  Loan: Indexed 40 year loan (I40) - Goal inflation 2.5%
+  Total paid =               61,932,172
+  Maximum capital outstanding : 26,220,571
+               max - original : 1,220,571
+  First payment: 75,706
+------------Results-------------
+  Loan: Indexed 25 year loan (I25) - Goal inflation 2.5%
+  Total paid =               43,929,209
+  Maximum capital outstanding : 25,000,000
+               max - original : 0
+  First payment: 105,964
+------------Results-------------
+  Loan: Indexed 20 year loan (I20) - Goal inflation 2.5%
+  Total paid =               39,210,084
+  Maximum capital outstanding : 25,000,000
+               max - original : 0
+  First payment: 126,471
+------------Results-------------
+  Loan: 40 year loan (N40) - Average inflation 5.0%
+  Total paid =               74,571,754
+  Maximum capital outstanding : 25,000,000
+               max - original : 0
+  First payment: 155,358
+------------Results-------------
+  Loan: Indexed 40 year loan (I40) - Average inflation 5.0%
+  Total paid =               112,236,615
+  Maximum capital outstanding : 40,187,977
+               max - original : 15,187,977
+  First payment: 75,706
+------------Results-------------
+  Loan: Indexed 25 year loan (I25) - Average inflation 5.0%
+  Total paid =               62,066,529
+  Maximum capital outstanding : 27,057,063
+               max - original : 2,057,063
+  First payment: 105,964
+------------Results-------------
+  Loan: Indexed 20 year loan (I20) - Average inflation 5.0%
+  Total paid =               51,322,432
+  Maximum capital outstanding : 25,302,760
+               max - original : 302,760
+  First payment: 126,471
+------------Results-------------
+  Loan: 40 year loan (N40)  - Loan made in 1980
+  Total paid =               975,399
+  Maximum capital outstanding : 327,000
+               max - original : 0
+  First payment: 2,032
+------------Results-------------
+  Loan: Indexed 40 year loan (I40) - Loan made in 1980
+  Total paid =               15,578,580
+  Maximum capital outstanding : 6,071,321
+               max - original : 5,744,321
+  First payment: 990
+------------Results-------------
+  Loan: Indexed 25 year loan (I25) - Loan made in 1980
+  Total paid =               8,189,228
+  Maximum capital outstanding : 4,589,069
+               max - original : 4,262,069
+  First payment: 1,386
+------------Results-------------
+  Loan: Indexed 20 year loan (I20) - Loan made in 1980
+  Total paid =               6,607,984
+  Maximum capital outstanding : 3,730,291
+               max - original : 3,403,291
+  First payment: 1,654
+------------Results-------------
+  Loan: Loan N40 - Loan made in 1992
+  Total paid =               25,861,484
+  Maximum capital outstanding : 8,670,000
+               max - original : 0
+  First payment: 53,878
+------------Results-------------
+  Loan: Indexed 40 year loan (I40) - Loan made in 1992
+  Total paid =               30,967,852
+  Maximum capital outstanding : 12,549,703
+               max - original : 3,879,703
+  First payment: 26,255
+------------Results-------------
+  Loan: Indexed 25 year loan (I25) - Loan made in 1992
+  Total paid =               18,323,310
+  Maximum capital outstanding : 8,670,000
+               max - original : 0
+  First payment: 36,748
+------------Results-------------
+  Loan: Indexed 20 year loan (I20) - Loan made in 1992
+  Total paid =               15,087,938
+  Maximum capital outstanding : 8,670,000
+               max - original : 0
+  First payment: 43,860

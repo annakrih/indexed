@@ -94,36 +94,34 @@ def getCPIfromGoogleSheets():
     if int(loanMadeYear) > 1995:
         CpiWorksheet = gc.open_by_key(
             spreadsheetUrlKey).worksheet("VisitalaNeysluverds")
-
-    # Print the name of spreadsheet used
-    print(CpiWorksheet.acell('A1').value)
-    years = CpiWorksheet.col_values(1)
+    
+    allValues = CpiWorksheet.get_all_values()
 
     # Find starting year row
     yearIndex = 0
-    for i in range(1, len(years)):
-        if(years[i] == loanMadeYear):
+    for i in range(4, len(allValues)):
+        if(allValues[i][0] == loanMadeYear):
             yearIndex = i
             break
 
     # Get data:
     months = 0
     monthIndex = loanMadeMonth
-    thisYearsValues = CpiWorksheet.row_values(yearIndex+1)
+    thisYearsValues = allValues[yearIndex]
     while months < int(duration):
-        if monthIndex >= len(thisYearsValues) or yearIndex >= len(years):
+        if monthIndex >= len(thisYearsValues) or yearIndex >= len(allValues) or thisYearsValues[monthIndex] == '':
             break
         else:
             cpi_index.append(to_float(thisYearsValues[monthIndex]))
 
         x_dates.append(date2num(dt.datetime(
-            int(years[yearIndex]), monthIndex, 1)))
+            int(allValues[yearIndex][0]), monthIndex, 1)))
 
         # go to next month:
         if monthIndex == 12:
             yearIndex += 1
             monthIndex = 1
-            thisYearsValues = CpiWorksheet.row_values(yearIndex+1)
+            thisYearsValues = allValues[yearIndex]
         else:
             monthIndex += 1
         months += 1
@@ -211,7 +209,12 @@ def graphResults(saveName):
     legnd.get_frame().set_alpha(0.5)
 
     ax1.set_ylim(bottom=0)
-    ax2.set_ylim(bottom=0)
+
+    if defaultInflation == 0:
+        temp = paid[0]*2
+        ax2.set_ylim(bottom=0, top=temp)
+    else:
+        ax2.set_ylim(bottom=0)
     # ax1.xaxis.set_major_locator(MaxNLocator(12))
     ax1.yaxis.set_major_formatter(FuncFormatter(comma_format))
     ax2.yaxis.set_major_formatter(FuncFormatter(comma_format))
@@ -367,7 +370,7 @@ loanMadeMonth = 1
 
 # GOAL
 loanN40()
-run("40 year loan (N40) - Goal inflation 2.5%", "n40_goal")
+run("40 year loan (N40) - Goal inflation 2.5%", "n_40_goal")
 
 defaultInflation = 0.025 # goalInflation
 
@@ -383,7 +386,7 @@ run("Indexed 20 year loan (I20) - Goal inflation 2.5%", "i20_goal")
 
 # Average
 loanN40()
-run("40 year loan (N40) - Average inflation 5.0%", "n40_avg")
+run("40 year loan (N40) - Average inflation 5.0%", "n_40_avg")
 
 defaultInflation = 0.05 # goalInflation
 
@@ -402,7 +405,7 @@ loanMadeYear = "1980"
 loanMadeMonth = 1
 
 loanN40()
-run("40 year loan (N40)  - Loan made in 1980", "n40_1980")
+run("40 year loan (N40)  - Loan made in 1980", "n_40_1980")
 
 defaultInflation = 0.05 # goalInflation
 
@@ -421,15 +424,15 @@ loanMadeYear = "1992"
 loanMadeMonth = 1
 
 loanN40()
-run("Loan N40 - Loan made in 1992", "n40_1980")
+run("Loan N40 - Loan made in 1992", "n_40_1992")
 
 defaultInflation = 0.05 # goalInflation
 
 loanI40()
-runWithData("Indexed 40 year loan (I40) - Loan made in 1992", "i40_1980")
+runWithData("Indexed 40 year loan (I40) - Loan made in 1992", "i40_1992")
 
 loanI25()
-runWithData("Indexed 25 year loan (I25) - Loan made in 1992", "i25_1980")
+runWithData("Indexed 25 year loan (I25) - Loan made in 1992", "i25_1992")
 
 loanI20()
-runWithData("Indexed 20 year loan (I20) - Loan made in 1992", "i20_1980")
+runWithData("Indexed 20 year loan (I20) - Loan made in 1992", "i20_1992")
