@@ -36,10 +36,10 @@ def getInflation(i):
     # i = index of inflation rate to get
     # Returns the inflation rate for indexation. Can be specified
     # as constant or read in from file on a per month basis
-    global projectedDate, projectedTitle, x_dates
+    global projectedDate, chartTitle, x_dates
 
     if(len(cpi_index) == 0):
-        inflation = defaultInflation / 12
+        inflation = ((1+defaultInflation)**(1.0/12.0)-1)
         if i == 0: 
             x_dates.append(date2num(dt.datetime(
                 int(loanMadeYear), loanMadeMonth, 1)))
@@ -52,13 +52,12 @@ def getInflation(i):
             inflation = cpi_index[i]/cpi_index[i-1] - 1
         else:                       # return default inflation
             x_dates.append(x_dates[-1] + 30)  # Tack on month to dates array
-            inflation = defaultInflation / 12	              # for fixed rate charts
+            inflation =((1+defaultInflation)**(1.0/12.0)-1)	              # for fixed rate charts
 
             if projectedDate == -1:             # store extrapolation year
                 projectedDate = len(x_dates)-1
 
-                projectedTitle = "\nProjected from July 2019 with %d%% annual inflation rate" % (
-                    inflation * 12 * 100)
+                chartTitle = chartTitle + "\nProjected from July 2019 with %d%% annual inflation rate" % (defaultInflation * 100)
     return inflation
 
 
@@ -110,7 +109,7 @@ def getCPIfromGoogleSheets():
     # Get data:
     months = 0
     monthIndex = loanMadeMonth
-    thisYearsValues = CpiWorksheet.row_values(yearIndex)
+    thisYearsValues = CpiWorksheet.row_values(yearIndex+1)
     while months < int(duration):
         if monthIndex >= len(thisYearsValues) or yearIndex >= len(years):
             break
@@ -124,28 +123,30 @@ def getCPIfromGoogleSheets():
         if monthIndex == 12:
             yearIndex += 1
             monthIndex = 1
-            thisYearsValues = CpiWorksheet.row_values(yearIndex)
+            thisYearsValues = CpiWorksheet.row_values(yearIndex+1)
         else:
             monthIndex += 1
         months += 1
 
 
 def computePayments():
-    global paid, capital_out, increase, P, II, AF, payment, capital, total, interest, projectedTitle
+    global paid, capital_out, increase, P, II, AF, payment, capital, total, interest, chartTitle
 
-    projectedTitle = 'Verðtryggð lán Principal = %s ISK in %s @ %.1f%% base rate' % (comma_format(Principal),loanMadeYear, Interest*100) 
+    if chartTitle == '':
+        chartTitle = 'Verðtryggð lán Principal = %s ISK in %s @ %.1f%% base rate' % (comma_format(Principal),loanMadeYear, Interest*100) 
 
     # Compute Payments
     # print("II     AF     P  ")
     for i in range(0, duration):
         AF.append((1/(D*Interest) - 1/((D*Interest)*pow(1+D*Interest, duration-i))))
 
+        thisMonthInflation = getInflation(i)
         if(i == 0):
-            II.append(100 + 100 * getInflation(i))
+            II.append(100 + 100 * thisMonthInflation)
             P.append(Principal)
             increase = P[0] - Principal
         else:
-            II.append(II[i-1] + II[i-1]*getInflation(i))
+            II.append(II[i-1] + II[i-1]*thisMonthInflation)
             P.append((P[i-1] - capital) * II[i]/II[i-1])
             increase = ((P[i-1] - capital) * II[i] /
                         II[i-1]) - (P[i-1] - capital)
@@ -158,12 +159,18 @@ def computePayments():
         paid.append(payment)
         capital_out.append(capital)
 
+        if i == 0:
+            indexedInitialPayment.append(payment)
+        else:
+            indexedInitialPayment.append(indexedInitialPayment[i-1] * (thisMonthInflation+1))
+
+
     # #  print "%0.1f %.2f %0.1f %0.1f %0.2f %0.1f  Inc:%0.1f" % (II[i],AF[i], P[i], payment, capital, interest, increase)
 
 
-def graphResults():
+def graphResults(saveName):
     fig, ax1 = plot.subplots(figsize=(11, 6))
-    plot.title(projectedTitle, fontsize=13)
+    plot.title(chartTitle, fontsize=13)
 
     # Plot Capital Outstanding - blue
     color = 'tab:blue'
@@ -190,6 +197,12 @@ def graphResults():
     if projectedDate != -1:      # if the loan has not ended, add dotted lines
         plot.plot_date(x_dates[projectedDate:-1], paid[projectedDate:-1],
                        marker='', ls='--', color=color, lw=3.0)
+    
+    # Plot inital payment amount adjusted for inflation - yellow
+    # color = 'orange'
+    # plot.plot_date(x_dates[0:-1], indexedInitialPayment[0:-1],
+    #                label="Inital payment - adjusted for infation", marker='', ls=':', lw=1.0,
+    #                color=color)
 
     lines, labels = ax1.get_legend_handles_labels()
     lines2, labels2 = ax2.get_legend_handles_labels()
@@ -207,13 +220,13 @@ def graphResults():
         plot.show()
 
     figFormat = "png"
-    fig.savefig(("fig_vl_%s_%s_%d.%s" %
-                 (Principal, loanMadeYear, durationInYears, figFormat)), format=figFormat)
+    fig.savefig(("%s.%s" %
+                 (saveName,  figFormat)), format=figFormat)
 
 
 def printResults():
     print("------------Results-------------")
-    print("  Loan: %s" % projectedTitle)
+    print("  Loan: %s" % chartTitle)
     print("  Total paid =               %s" % comma_format(sum(paid)))
     print("  Maximum capital outstanding : %s" % comma_format(max(P)))
     print("               max - original : %s" %
@@ -240,14 +253,13 @@ def runSingleExperimentFromArgs():
         getCPIfromGoogleSheets()
     computePayments()
     printResults()
-    graphResults()
+    graphResults("saveName")
 
 
 def initializeGlobalVariables():
     # should be run before running another consecutive experiment.
-    global projectedDate, projectedTitle, D, AF, P, payment, interest, II, total, increase, capital_out, cpi_index, dates, x_dates, paid
+    global projectedDate, chartTitle, D, AF, P, payment, interest, II, total, increase, capital_out, cpi_index, dates, x_dates, paid,indexedInitialPayment
     projectedDate = -1
-    projectedTitle = ""
     D = float(30.0/360.0)
     AF = []
     P = []
@@ -261,12 +273,13 @@ def initializeGlobalVariables():
     dates = []
     x_dates = []
     paid = []
+    indexedInitialPayment = []
+
 
 
 # GLOBAL VARIABLES - should be initialized this way before running.
 # Can be initialized with initializeGlobalVariables function
 projectedDate = -1       # Year from which values are extrapolated
-projectedTitle = ""
 D = float(30.0/360.0)
 AF = []			        # Annuity factor
 P = []
@@ -281,11 +294,13 @@ cpi_index = []			# list of cpi indexes as data
 dates = []
 x_dates = []
 paid = []
+indexedInitialPayment = [] # How the payments should increase per month if they would only
+                           # increase with inflation, not negative amortization
 
 
 # VARIABLES - these are the default values
 # set these values for experiments
-DISPLAY = True
+DISPLAY = False
 defaultInflation = 0.05		        # Default inflation per year, if cpi isn't used. 
 loanMadeYear = 0
 loanMadeMonth = 1
@@ -293,6 +308,7 @@ duration = 0
 durationInYears = 0
 Principal = 0
 Interest = 0.2
+chartTitle = ''
 
 # main:
 
@@ -302,22 +318,118 @@ if len(sys.argv) >= 2:
 
 
 # Run multiple expiriments below this, and don't put arguments 
-def run():
+def run(title, saveName):
+    global chartTitle
     initializeGlobalVariables()
     computePayments()
+    chartTitle = title
     printResults()
-    graphResults()
+    graphResults(saveName)
 
-def runWithData():
+def runWithData(title, saveName):
+    global chartTitle
+    initializeGlobalVariables()
     getCPIfromGoogleSheets()
-    run()
+    computePayments()
+    chartTitle = title
+    printResults()
+    graphResults(saveName)
 
-defaultInflation = 0.05		        # Default inflation per year, if cpi isn't used. 
-loanMadeYear = 1980
+
+def loanN40(): 
+    global defaultInflation, loanMadeYear, loanMadeMonth, durationInYears, duration, Principal, Interest
+    defaultInflation = 0.00		        # Default inflation per year, if cpi isn't used. 
+    durationInYears = 40
+    duration = durationInYears*12
+    Interest = 0.07
+
+def loanI40(): 
+    global defaultInflation, loanMadeYear, loanMadeMonth, durationInYears, duration, Principal, Interest
+    durationInYears = 40
+    duration = durationInYears*12
+    Interest = 0.02
+
+def loanI25(): 
+    global defaultInflation, loanMadeYear, loanMadeMonth, durationInYears, duration, Principal, Interest
+    durationInYears = 25
+    duration = durationInYears*12
+    Interest = 0.02
+
+def loanI20(): 
+    global defaultInflation, loanMadeYear, loanMadeMonth, durationInYears, duration, Principal, Interest
+    durationInYears = 20
+    duration = durationInYears*12
+    Interest = 0.02
+
+Principal = 25000000
+loanMadeYear = "2019"
 loanMadeMonth = 1
-duration = 480
-durationInYears = duration/12
-Principal = 10000000
-Interest = 0.0389
 
-run()
+# GOAL
+loanN40()
+run("40 year loan (N40) - Goal inflation 2.5%", "n40_goal")
+
+defaultInflation = 0.025 # goalInflation
+
+loanI40()
+run("Indexed 40 year loan (I40) - Goal inflation 2.5%", "i40_goal")
+
+loanI25()
+run("Indexed 25 year loan (I25) - Goal inflation 2.5%", "i25_goal")
+
+loanI20()
+run("Indexed 20 year loan (I20) - Goal inflation 2.5%", "i20_goal")
+
+
+# Average
+loanN40()
+run("40 year loan (N40) - Average inflation 5.0%", "n40_avg")
+
+defaultInflation = 0.05 # goalInflation
+
+loanI40()
+run("Indexed 40 year loan (I40) - Average inflation 5.0%", "i40_avg")
+
+loanI25()
+run("Indexed 25 year loan (I25) - Average inflation 5.0%", "i25_avg")
+
+loanI20()
+run("Indexed 20 year loan (I20) - Average inflation 5.0%", "i20_avg")
+
+# 1980
+Principal = 327000
+loanMadeYear = "1980"
+loanMadeMonth = 1
+
+loanN40()
+run("40 year loan (N40)  - Loan made in 1980", "n40_1980")
+
+defaultInflation = 0.05 # goalInflation
+
+loanI40()
+runWithData("Indexed 40 year loan (I40) - Loan made in 1980", "i40_1980")
+
+loanI25()
+runWithData("Indexed 25 year loan (I25) - Loan made in 1980", "i25_1980")
+
+loanI20()
+runWithData("Indexed 20 year loan (I20) - Loan made in 1980", "i20_1980")
+
+# 1992
+Principal = 8670000
+loanMadeYear = "1992"
+loanMadeMonth = 1
+
+loanN40()
+run("Loan N40 - Loan made in 1992", "n40_1980")
+
+defaultInflation = 0.05 # goalInflation
+
+loanI40()
+runWithData("Indexed 40 year loan (I40) - Loan made in 1992", "i40_1980")
+
+loanI25()
+runWithData("Indexed 25 year loan (I25) - Loan made in 1992", "i25_1980")
+
+loanI20()
+runWithData("Indexed 20 year loan (I20) - Loan made in 1992", "i20_1980")
